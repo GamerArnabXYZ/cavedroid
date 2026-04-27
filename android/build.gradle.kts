@@ -55,10 +55,24 @@ android {
         multiDexEnabled = true
     }
 
+    // ABI Splits Configuration for 3 separate APKs + 1 Universal APK
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
+    // Updated APK renaming logic to avoid overwriting files
     applicationVariants.asSequence()
         .flatMap { variant -> variant.outputs.asSequence() }
         .mapNotNull { output -> output as? com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-        .forEach { output -> output.outputFileName = "android-${ApplicationInfo.versionName}.apk" }
+        .forEach { output ->
+            val abi = output.getFilter(com.android.build.OutputFile.ABI) ?: "universal"
+            output.outputFileName = "android-${ApplicationInfo.versionName}-$abi.apk"
+        }
 
     val releaseConfig = signingConfigs.create("release_config")
     with(releaseConfig) {
